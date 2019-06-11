@@ -79,7 +79,7 @@ python -m baselines.run --alg=<name of the algorithm> --env=<environment_id> [ad
 ### Example 1. PPO with MuJoCo Humanoid
 For instance, to train a fully-connected network controlling MuJoCo humanoid using PPO2 for 20M timesteps
 ```bash
-python -m baselines.run --alg=ppo2 --env=Humanoid-v2 --network=mlp --num_timesteps=2e7
+python3 -m baselines.run --alg=acktr --env=furniture-v0 --network=mlp --num_timesteps=2e7
 ```
 Note that for mujoco environments fully-connected network is default, so we can omit `--network=mlp`
 The hyperparameters for both network and the learning algorithm can be controlled via the command line, for instance:
@@ -94,7 +94,7 @@ docstring for [baselines/ppo2/ppo2.py/learn()](baselines/ppo2/ppo2.py#L152) for 
 ### Example 2. DQN on Atari 
 DQN with Atari is at this point a classics of benchmarks. To run the baselines implementation of DQN on Atari Pong:
 ```
-python -m baselines.run --alg=deepq --env=PongNoFrameskip-v4 --num_timesteps=1e6
+python3 -m baselines.run --alg=deepq --env=PongNoFrameskip-v4 --num_timesteps=1e6
 ```
 
 ## Saving, loading and visualizing models
@@ -102,11 +102,11 @@ The algorithms serialization API is not properly unified yet; however, there is 
 `--save_path` and `--load_path` command-line option loads the tensorflow state from a given path before training, and saves it after the training, respectively. 
 Let's imagine you'd like to train ppo2 on Atari Pong,  save the model and then later visualize what has it learnt.
 ```bash
-python -m baselines.run --alg=ppo2 --env=PongNoFrameskip-v4 --num_timesteps=2e7 --save_path=~/models/pong_20M_ppo2
+python3 -m baselines.run --alg=acktr --env=furniture-v0 --num_timesteps=2e5 --save_path=~/models/furniture_20M_acktr
 ```
 This should get to the mean reward per episode about 20. To load and visualize the model, we'll do the following - load the model, train it for 0 steps, and then visualize: 
 ```bash
-python -m baselines.run --alg=ppo2 --env=PongNoFrameskip-v4 --num_timesteps=0 --load_path=~/models/pong_20M_ppo2 --play
+python3 -m baselines.run --alg=acktr --env=furniture-v0 --num_timesteps=0 --load_path=~/models/furniture_20M_acktr --play
 ```
 
 *NOTE:* Mujoco environments require normalization to work properly, so we wrap them with VecNormalize wrapper. Currently, to ensure the models are saved with normalization (so that trained models can be restored and run without further training) the normalization coefficients are saved as tensorflow variables. This can decrease the performance somewhat, so if you require high-throughput steps with Mujoco and do not need saving/restoring the models, it may make sense to use numpy normalization instead. To do that, set 'use_tf=False` in [baselines/run.py](baselines/run.py#L116). 
