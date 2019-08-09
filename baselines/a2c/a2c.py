@@ -133,6 +133,7 @@ def learn(
     gamma=0.99,
     log_interval=100,
     load_path=None,
+    save_path=None,
     save_interval=None,
     **network_kwargs):
 
@@ -233,6 +234,7 @@ def learn(
 
         if save_interval and (update % save_interval == 0 or update == 1) and logger.get_dir():
             savepath = osp.join(logger.get_dir(), 'checkpoint%.5i'%update)
+            savepath = save_path
             print('Saving to', savepath)
             model.save(savepath)
 
