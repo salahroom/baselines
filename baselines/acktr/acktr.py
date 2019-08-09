@@ -97,11 +97,12 @@ def learn(network, env, seed, total_timesteps=int(40e6), gamma=0.99, log_interva
                  kfac_clip=0.001, save_interval=None, lrschedule='linear', load_path=None, is_async=True, **network_kwargs):
     set_global_seeds(seed)
 
-
+    #print("\n \n \n \n \n HI21 \n \n \n \n \n")
     if network == 'cnn':
         network_kwargs['one_dim_bias'] = True
 
     policy = build_policy(env, network, **network_kwargs)
+    #print("\n \n \n \n \n HI22 \n \n \n \n \n")
 
     nenvs = env.num_envs
     ob_space = env.observation_space
@@ -110,11 +111,14 @@ def learn(network, env, seed, total_timesteps=int(40e6), gamma=0.99, log_interva
                                 =nsteps, ent_coef=ent_coef, vf_coef=vf_coef, vf_fisher_coef=
                                 vf_fisher_coef, lr=lr, max_grad_norm=max_grad_norm, kfac_clip=kfac_clip,
                                 lrschedule=lrschedule, is_async=is_async)
-    if save_interval and logger.get_dir():
-        import cloudpickle
-        with open(osp.join(logger.get_dir(), 'make_model.pkl'), 'wb') as fh:
-            fh.write(cloudpickle.dumps(make_model))
+    # if save_interval and logger.get_dir():
+    #     import cloudpickle
+    #     print(osp.join(logger.get_dir(), 'make_model.pkl'))
+    #     with open(osp.join(logger.get_dir(), 'make_model.pkl'), 'wb+') as fh:
+    #         print(make_model)
+    #         fh.write(cloudpickle.dumps(make_model))
     model = make_model()
+    #print("\n \n \n \n \n HI23 \n \n \n \n \n")
 
     if load_path is not None:
         model.load(load_path)
@@ -128,14 +132,24 @@ def learn(network, env, seed, total_timesteps=int(40e6), gamma=0.99, log_interva
         enqueue_threads = model.q_runner.create_threads(model.sess, coord=coord, start=True)
     else:
         enqueue_threads = []
+    #print("\n \n \n \n \n HI24 \n \n \n \n \n")
 
     for update in range(1, total_timesteps//nbatch+1):
+        #print("step1")
         obs, states, rewards, masks, actions, values, epinfos = runner.run()
+        #print("step2")
         epinfobuf.extend(epinfos)
+        #print("step3")
         policy_loss, value_loss, policy_entropy = model.train(obs, states, rewards, masks, actions, values)
+        #print("step4")
         model.old_obs = obs
+        #print("step5")
         nseconds = time.time()-tstart
+        #print("step6")
         fps = int((update*nbatch)/nseconds)
+        #print("step7")
+        #print(update)
+        ##print("\n \n \n \n \n HI25", update, " \n \n \n \n \n")
         if update % log_interval == 0 or update == 1:
             ev = explained_variance(values, rewards)
             logger.record_tabular("nupdates", update)
@@ -153,6 +167,7 @@ def learn(network, env, seed, total_timesteps=int(40e6), gamma=0.99, log_interva
             savepath = osp.join(logger.get_dir(), 'checkpoint%.5i'%update)
             print('Saving to', savepath)
             model.save(savepath)
+            
     coord.request_stop()
     coord.join(enqueue_threads)
     return model

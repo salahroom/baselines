@@ -7,7 +7,7 @@ import gym_furniture
 from collections import defaultdict
 import tensorflow as tf
 import numpy as np
-
+import time
 from baselines.common.vec_env import VecFrameStack, VecNormalize, VecEnv
 from baselines.common.vec_env.vec_video_recorder import VecVideoRecorder
 from baselines.common.cmd_util import common_arg_parser, parse_unknown_args, make_vec_env, make_env
@@ -52,11 +52,18 @@ _game_envs['retro'] = {
 
 
 def train(args, extra_args):
+
+    #print("\n \n \n \n \n HI11 \n \n \n \n \n")
+
+
     env_type, env_id = get_env_type(args)
-    print('env_type: {}'.format(env_type))
+    #print("\n \n \n \n \n HI12 \n \n \n \n \n")
+
+    #print('env_type: {}'.format(env_type))
 
     total_timesteps = int(args.num_timesteps)
     seed = args.seed
+    #print("\n \n \n \n \n HI12 \n \n \n \n \n")
 
     learn = get_learn_function(args.alg)
     alg_kwargs = get_learn_function_defaults(args.alg, env_type)
@@ -64,6 +71,7 @@ def train(args, extra_args):
 
     env = build_env(args)
     if args.save_video_interval != 0:
+        #print("\n \n \n \n \n HI13 \n \n \n \n \n")
         env = VecVideoRecorder(env, osp.join(logger.get_dir(), "videos"), record_video_trigger=lambda x: x % args.save_video_interval == 0, video_length=args.save_video_length)
 
     if args.network:
@@ -72,14 +80,17 @@ def train(args, extra_args):
         if alg_kwargs.get('network') is None:
             alg_kwargs['network'] = get_default_network(env_type)
 
-    print('Training {} on {}:{} with arguments \n{}'.format(args.alg, env_type, env_id, alg_kwargs))
-
+    #print('Training {} on {}:{} with arguments \n{}'.format(args.alg, env_type, env_id, alg_kwargs))
+    #print("\n \n \n \n \n HI14 \n \n \n \n \n")
     model = learn(
         env=env,
         seed=seed,
         total_timesteps=total_timesteps,
+        save_interval=1000000,
         **alg_kwargs
     )
+    #print("\n \n \n \n \n HI15 \n \n \n \n \n")
+
 
     return model, env
 
@@ -200,6 +211,7 @@ def main(args):
     arg_parser = common_arg_parser()
     args, unknown_args = arg_parser.parse_known_args(args)
     extra_args = parse_cmdline_kwargs(unknown_args)
+    #print("\n \n \n \n \n HI1 \n \n \n \n \n")
 
     if MPI is None or MPI.COMM_WORLD.Get_rank() == 0:
         rank = 0
@@ -208,12 +220,18 @@ def main(args):
         logger.configure(format_strs=[])
         rank = MPI.COMM_WORLD.Get_rank()
 
+    if args.save_path is not None and rank == 0:
+        save_path = osp.expanduser(args.save_path)
+
+    #print("\n \n \n \n \n HI2 \n \n \n \n \n")
     model, env = train(args, extra_args)
+    #print("\n \n \n \n \n HI3 \n \n \n \n \n")
 
     if args.save_path is not None and rank == 0:
         save_path = osp.expanduser(args.save_path)
         model.save(save_path)
 
+    #print("\n \n \n \n \n HI4 \n \n \n \n \n")
     if args.play:
         logger.log("Running trained model")
         obs = env.reset()
@@ -228,14 +246,18 @@ def main(args):
             else:
                 actions, _, _, _ = model.step(obs)
 
+            #print("\n \n \n \n \n HI1 \n \n \n \n \n")
+
             obs, rew, done, _ = env.step(actions)
             episode_rew += rew[0] if isinstance(env, VecEnv) else rew
             env.render()
+            time.sleep(3)
             done = done.any() if isinstance(done, np.ndarray) else done
             if done:
                 print('episode_rew={}'.format(episode_rew))
                 episode_rew = 0
                 obs = env.reset()
+                
 
     env.close()
 

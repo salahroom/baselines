@@ -64,13 +64,22 @@ class PolicyWithValue(object):
             self.vf = self.vf[:,0]
 
     def _evaluate(self, variables, observation, **extra_feed):
+        #print("GUGU1")
         sess = self.sess
+        #print("GUGU2")
         feed_dict = {self.X: adjust_shape(self.X, observation)}
+        #print("GUGU3")
         for inpt_name, data in extra_feed.items():
+            #print("GUGU4")
             if inpt_name in self.__dict__.keys():
+                #print("GUGU5")
                 inpt = self.__dict__[inpt_name]
+                #print("GUGU6")
                 if isinstance(inpt, tf.Tensor) and inpt._op.type == 'Placeholder':
+                    #print("GUGU7")
                     feed_dict[inpt] = adjust_shape(inpt, data)
+        #print("GUGU8")
+        #print(variables, feed_dict)
 
         return sess.run(variables, feed_dict)
 
@@ -89,10 +98,13 @@ class PolicyWithValue(object):
         -------
         (action, value estimate, next state, negative log likelihood of the action under current policy parameters) tuple
         """
-
+        #print("HHAHA1")
         a, v, state, neglogp = self._evaluate([self.action, self.vf, self.state, self.neglogp], observation, **extra_feed)
+        #print("HHAHA2")
         if state.size == 0:
+            #print("HHAHA3")
             state = None
+        #print("HHAHA4")
         return a, v, state, neglogp
 
     def value(self, ob, *args, **kwargs):
