@@ -86,7 +86,7 @@ def train(args, extra_args):
         env=env,
         seed=seed,
         total_timesteps=total_timesteps,
-        save_interval=1000000,
+        save_interval=100000,
         save_path=args.save_path,
         **alg_kwargs
     )

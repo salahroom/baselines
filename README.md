@@ -102,9 +102,9 @@ The algorithms serialization API is not properly unified yet; however, there is 
 `--save_path` and `--load_path` command-line option loads the tensorflow state from a given path before training, and saves it after the training, respectively. 
 Let's imagine you'd like to train ppo2 on Atari Pong,  save the model and then later visualize what has it learnt.
 ```bash
-python3 -m baselines.run --alg=acktr --env=furniture-v0 --num_timesteps=2e5 --save_path=~/models/furniture_20M_acktr
+python3 -m baselines.run --alg=acktr --env=furniture-v0 --num_timesteps=2e5 --save_path=/Users/rh-youssef/models/furniture_20M_acktr
 
-python3 -m baselines.run --alg=acktr --env=furniture-v0 --num_timesteps=2e5 --save_path=~/models/furniture_20M_acktr --save_video_interval 1000
+python3 -m baselines.run --alg=acktr --env=furniture-v0 --num_timesteps=2e5 --save_path=/Users/rh-youssef/models/furniture_20M_acktr --save_video_interval 1000
 ```
 This should get to the mean reward per episode about 20. To load and visualize the model, we'll do the following - load the model, train it for 0 steps, and then visualize: 
 ```bash
