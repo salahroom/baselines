@@ -7,6 +7,9 @@ from baselines import logger
 from baselines.common import set_global_seeds, explained_variance
 from baselines.common.policies import build_policy
 from baselines.common.tf_util import get_session, save_variables, load_variables
+import datetime
+
+from tensorboardX import SummaryWriter
 
 from baselines.a2c.runner import Runner
 from baselines.a2c.utils import Scheduler, find_trainable_variables
@@ -96,6 +99,13 @@ def learn(network, env, seed, total_timesteps=int(40e6), gamma=0.99, log_interva
                  ent_coef=0.01, vf_coef=0.5, vf_fisher_coef=1.0, lr=0.25, max_grad_norm=0.5,
                  kfac_clip=0.001, save_interval=None, save_path=None, lrschedule='linear', load_path=None, is_async=True, **network_kwargs):
     set_global_seeds(seed)
+    step_size = env.envs[0].step_size
+    rotation_size = env.envs[0].rotation_size
+    active_rewards = env.envs[0].active_rewards
+    comment = "stepsize:{}, rotationsize: {}, {}".format(step_size, rotation_size, ", ".join(active_rewards))
+
+    current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    writer = SummaryWriter('runs/acktr/{} {}'.format(current_time, comment))
 
     #print("\n \n \n \n \n HI21 \n \n \n \n \n")
     if network == 'cnn':
@@ -147,10 +157,19 @@ def learn(network, env, seed, total_timesteps=int(40e6), gamma=0.99, log_interva
         nseconds = time.time()-tstart
         #print("step6")
         fps = int((update*nbatch)/nseconds)
-        #print("step7")
-        #print(update)
-        ##print("\n \n \n \n \n HI25", update, " \n \n \n \n \n")
+
+        
+
+        writer.add_scalar('eprewmean', safemean([epinfo['r'] for epinfo in epinfobuf]), update)
+        writer.add_scalar('policy_entropy', float(policy_entropy), update)
+        writer.add_scalar('policy_loss', float(policy_loss), update)
+        writer.add_scalar('value_loss', float(value_loss), update)
+        
+
         if update % log_interval == 0 or update == 1:
+            # images = env.get_images()
+            # image = images[0]
+            # writer.add_image('imresult', image, update, dataformats='HWC')
             ev = explained_variance(values, rewards)
             logger.record_tabular("nupdates", update)
             logger.record_tabular("total_timesteps", update*nbatch)

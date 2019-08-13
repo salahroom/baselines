@@ -8,6 +8,9 @@ from baselines import logger
 from baselines.common import set_global_seeds, explained_variance
 from baselines.common import tf_util
 from baselines.common.policies import build_policy
+import datetime
+
+from tensorboardX import SummaryWriter
 
 
 from baselines.a2c.utils import Scheduler, find_trainable_variables
@@ -187,6 +190,13 @@ def learn(
 
 
     set_global_seeds(seed)
+    step_size = env.envs[0].step_size
+    rotation_size = env.envs[0].rotation_size
+    active_rewards = env.envs[0].active_rewards
+    comment = "stepsize:{}, rotationsize: {}, {}".format(step_size, rotation_size, ", ".join(active_rewards))
+
+    current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    writer = SummaryWriter('runs/a2c/{} {}'.format(current_time, comment))
 
     # Get the nb of env
     nenvs = env.num_envs
@@ -206,16 +216,27 @@ def learn(
     nbatch = nenvs*nsteps
 
     # Start total timer
+
     tstart = time.time()
+    
 
     for update in range(1, total_timesteps//nbatch+1):
         # Get mini batch of experiences
+        # images = env.get_images()
+        # image = images[0]
+        # writer.add_image('imresult', image, update, dataformats='HWC')
+
         obs, states, rewards, masks, actions, values, epinfos = runner.run()
         epinfobuf.extend(epinfos)
 
-        policy_loss, value_loss, policy_entropy = model.train(obs, states, rewards, masks, actions, values)
         nseconds = time.time()-tstart
 
+        
+        policy_loss, value_loss, policy_entropy = model.train(obs, states, rewards, masks, actions, values)
+
+        writer.add_scalar('eprewmean', safemean([epinfo['r'] for epinfo in epinfobuf]), update)
+        writer.add_scalar('policy_entropy', float(policy_entropy), update)
+        writer.add_scalar('value_loss', float(value_loss), update)
         # Calculate the fps (frame per second)
         fps = int((update*nbatch)/nseconds)
         if update % log_interval == 0 or update == 1:

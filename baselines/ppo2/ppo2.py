@@ -3,9 +3,12 @@ import time
 import numpy as np
 import os.path as osp
 from baselines import logger
+import datetime
 from collections import deque
 from baselines.common import explained_variance, set_global_seeds
 from baselines.common.policies import build_policy
+import tensorflow as tf
+from tensorboardX import SummaryWriter
 try:
     from mpi4py import MPI
 except ImportError:
@@ -77,7 +80,14 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2
 
     '''
 
+    step_size = env.envs[0].step_size
+    rotation_size = env.envs[0].rotation_size
+    active_rewards = env.envs[0].active_rewards
+    comment = "stepsize:{}, rotationsize: {}, {}".format(step_size, rotation_size, ", ".join(active_rewards))
+
     set_global_seeds(seed)
+    current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    writer = SummaryWriter('runs/ppo2/{} {}'.format(current_time, comment))
 
     if isinstance(lr, float): lr = constfn(lr)
     else: assert callable(lr)
@@ -93,6 +103,7 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2
     # Get state_space and action_space
     ob_space = env.observation_space
     ac_space = env.action_space
+
 
     # Calculate the batch_size
     nbatch = nenvs * nsteps
@@ -189,7 +200,17 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2
         if update_fn is not None:
             update_fn(update)
 
+        
+        writer.add_scalar('eprewmean', safemean([epinfo['r'] for epinfo in epinfobuf]), update)
+
+        for (lossval, lossname) in zip(lossvals, model.loss_names):
+                writer.add_scalar('loss/' + lossname, lossval, update)
+
         if update % log_interval == 0 or update == 1:
+            # images = env.get_images()
+            # image = images[0]
+            # writer.add_image('imresult', image, update, dataformats='HWC')
+
             # Calculates if value function is a good predicator of the returns (ev > 1)
             # or if it's just worse than predicting nothing (ev =< 0)
             ev = explained_variance(values, returns)
