@@ -6,6 +6,8 @@ import zipfile
 import cloudpickle
 import numpy as np
 import datetime
+from tensorboardX import SummaryWriter
+
 
 import baselines.common.tf_util as U
 from baselines.common.tf_util import load_variables, save_variables
