@@ -5,6 +5,7 @@ import tensorflow as tf
 import zipfile
 import cloudpickle
 import numpy as np
+import datetime
 
 import baselines.common.tf_util as U
 from baselines.common.tf_util import load_variables, save_variables
@@ -335,7 +336,7 @@ def learn(env,
                     save_variables(model_file)
                     model_saved = True
                     saved_mean_reward = mean_100ep_reward
-                    
+
         if model_saved:
             if print_freq is not None:
                 logger.log("Restored model with mean reward: {}".format(saved_mean_reward))
