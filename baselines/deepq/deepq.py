@@ -120,6 +120,7 @@ def learn(env,
           param_noise=False,
           callback=None,
           load_path=None,
+          save_path=None,
           **network_kwargs
             ):
     """Train a deepq model.
