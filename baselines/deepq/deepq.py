@@ -321,8 +321,8 @@ def learn(env,
 
             mean_100ep_reward = round(np.mean(episode_rewards[-101:-1]), 1)
             num_episodes = len(episode_rewards)
-            writer.add_scalar('mean 100 episode reward', mean_100ep_reward, update)
-            writer.add_scalar('% time spent exploring', int(100 * exploration.value(t)), update)
+            writer.add_scalar('mean 100 episode reward', mean_100ep_reward, t)
+            writer.add_scalar('% time spent exploring', int(100 * exploration.value(t)), t)
             if done and print_freq is not None and len(episode_rewards) % print_freq == 0:
                 logger.record_tabular("steps", t)
                 logger.record_tabular("episodes", num_episodes)
