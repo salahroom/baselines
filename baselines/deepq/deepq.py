@@ -100,6 +100,7 @@ def learn(env,
           buffer_size=50000,
           exploration_fraction=0.1,
           exploration_final_eps=0.02,
+          save_interval=None,
           train_freq=1,
           batch_size=32,
           print_freq=100,
@@ -187,6 +188,13 @@ def learn(env,
     """
     # Create all the functions necessary to train the model
 
+    step_size = env.envs[0].step_size
+    rotation_size = env.envs[0].rotation_size
+    active_rewards = env.envs[0].active_rewards
+    comment = "stepsize:{}, rotationsize: {}, {}".format(step_size, rotation_size, ", ".join(active_rewards))
+
+    current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    writer = SummaryWriter('runs/acktr/{} {}'.format(current_time, comment))
     sess = get_session()
     set_global_seeds(seed)
 
@@ -309,6 +317,8 @@ def learn(env,
 
             mean_100ep_reward = round(np.mean(episode_rewards[-101:-1]), 1)
             num_episodes = len(episode_rewards)
+            writer.add_scalar('mean 100 episode reward', mean_100ep_reward, update)
+            writer.add_scalar('% time spent exploring', int(100 * exploration.value(t)), update)
             if done and print_freq is not None and len(episode_rewards) % print_freq == 0:
                 logger.record_tabular("steps", t)
                 logger.record_tabular("episodes", num_episodes)
@@ -325,6 +335,7 @@ def learn(env,
                     save_variables(model_file)
                     model_saved = True
                     saved_mean_reward = mean_100ep_reward
+                    
         if model_saved:
             if print_freq is not None:
                 logger.log("Restored model with mean reward: {}".format(saved_mean_reward))
