@@ -1,14 +1,16 @@
 import os
 import time
 import numpy as np
+import wandb
 import os.path as osp
 from baselines import logger
+import gym
+import gym_furniture
 import datetime
 from collections import deque
 from baselines.common import explained_variance, set_global_seeds
 from baselines.common.policies import build_policy
 import tensorflow as tf
-from tensorboardX import SummaryWriter
 try:
     from mpi4py import MPI
 except ImportError:
@@ -21,7 +23,7 @@ def constfn(val):
         return val
     return f
 
-def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2048, ent_coef=0.0, lr=3e-4,
+def learn(*, network, env, total_timesteps, env_id=None, eval_env = None, seed=None, nsteps=2048, ent_coef=0.0, lr=3e-4,
             vf_coef=0.5,  max_grad_norm=0.5, gamma=0.99, lam=0.95,
             log_interval=10, nminibatches=4, noptepochs=4, cliprange=0.2,
             save_interval=0, save_path=None, load_path=None, model_fn=None, update_fn=None, init_fn=None, mpi_rank_weight=1, comm=None, **network_kwargs):
@@ -79,15 +81,17 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2
 
 
     '''
-
-    step_size = env.envs[0].step_size
-    rotation_size = env.envs[0].rotation_size
-    active_rewards = env.envs[0].active_rewards
-    comment = "stepsize:{}, rotationsize: {}, {}".format(step_size, rotation_size, ", ".join(active_rewards))
-
-    set_global_seeds(seed)
-    current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    writer = SummaryWriter('runs/ppo2/{} {}'.format(current_time, comment))
+    # step_size = env.envs[0].step_size
+    # rotation_size = env.envs[0].rotation_size
+    # active_rewards = env.envs[0].active_rewards
+    # comment = "stepsize:{}, rotationsize: {}, {}".format(step_size, rotation_size, ", ".join(active_rewards))
+    info_env = gym.make(env_id)
+    algo = 'ppo2'
+    wandb.init(project="floorplan_generator", name=algo)
+    wandb.config.algo = algo
+    wandb.config.action_space = info_env.action_type
+    wandb.config.discretization = info_env.discretization
+    wandb.config.active_rewards = info_env.active_rewards
 
     if isinstance(lr, float): lr = constfn(lr)
     else: assert callable(lr)
@@ -200,11 +204,6 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2
         if update_fn is not None:
             update_fn(update)
 
-        
-        writer.add_scalar('eprewmean', safemean([epinfo['r'] for epinfo in epinfobuf]), update)
-
-        for (lossval, lossname) in zip(lossvals, model.loss_names):
-                writer.add_scalar('loss/' + lossname, lossval, update)
 
         if update % log_interval == 0 or update == 1:
             # images = env.get_images()
@@ -229,6 +228,9 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2
                 logger.logkv('loss/' + lossname, lossval)
 
             logger.dumpkvs()
+
+            wandb.log({'eprewmean': safemean([epinfo['r'] for epinfo in epinfobuf]), 
+                'eplenmean': safemean([epinfo['l'] for epinfo in epinfobuf])})
 
         if save_interval and (update % save_interval == 0 or update == 1) and logger.get_dir() and is_mpi_root:
             checkdir = osp.join(logger.get_dir(), 'checkpoints')

@@ -3,7 +3,9 @@ import time
 import functools
 import tensorflow as tf
 from baselines import logger
-
+import gym
+import gym_furniture
+import wandb
 from baselines.common import set_global_seeds, explained_variance
 from baselines.common.policies import build_policy
 from baselines.common.tf_util import get_session, save_variables, load_variables
@@ -95,18 +97,17 @@ class Model(object):
         self.initial_state = step_model.initial_state
         tf.global_variables_initializer().run(session=sess)
 
-def learn(network, env, seed, total_timesteps=int(40e6), gamma=0.99, log_interval=100, nprocs=32, nsteps=20,
+def learn(network, env, seed, env_id=None, total_timesteps=int(40e6), gamma=0.99, log_interval=100, nprocs=32, nsteps=20,
                  ent_coef=0.01, vf_coef=0.5, vf_fisher_coef=1.0, lr=0.25, max_grad_norm=0.5,
                  kfac_clip=0.001, save_interval=None, save_path=None, lrschedule='linear', load_path=None, is_async=True, **network_kwargs):
-    set_global_seeds(seed)
-    step_size = env.envs[0].step_size
-    rotation_size = env.envs[0].rotation_size
-    active_rewards = env.envs[0].active_rewards
-    comment = "stepsize:{}, rotationsize: {}, {}".format(step_size, rotation_size, ", ".join(active_rewards))
-
-    current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    writer = SummaryWriter('runs/acktr/{} {}'.format(current_time, comment))
-
+    
+    info_env = gym.make(env_id)
+    algo = 'acktr'
+    wandb.init(project="floorplan_generator", name=algo)
+    wandb.config.algo = algo
+    wandb.config.action_space = info_env.action_type
+    wandb.config.discretization = info_env.discretization
+    wandb.config.active_rewards = info_env.active_rewards
     #print("\n \n \n \n \n HI21 \n \n \n \n \n")
     if network == 'cnn':
         network_kwargs['one_dim_bias'] = True
@@ -158,14 +159,6 @@ def learn(network, env, seed, total_timesteps=int(40e6), gamma=0.99, log_interva
         #print("step6")
         fps = int((update*nbatch)/nseconds)
 
-        
-
-        writer.add_scalar('eprewmean', safemean([epinfo['r'] for epinfo in epinfobuf]), update)
-        writer.add_scalar('policy_entropy', float(policy_entropy), update)
-        writer.add_scalar('policy_loss', float(policy_loss), update)
-        writer.add_scalar('value_loss', float(value_loss), update)
-        
-
         if update % log_interval == 0 or update == 1:
             # images = env.get_images()
             # image = images[0]
@@ -181,6 +174,10 @@ def learn(network, env, seed, total_timesteps=int(40e6), gamma=0.99, log_interva
             logger.record_tabular("eprewmean", safemean([epinfo['r'] for epinfo in epinfobuf]))
             logger.record_tabular("eplenmean", safemean([epinfo['l'] for epinfo in epinfobuf]))
             logger.dump_tabular()
+
+            wandb.log({'eprewmean': safemean([epinfo['r'] for epinfo in epinfobuf]), 
+                    'eplenmean': safemean([epinfo['l'] for epinfo in epinfobuf])})
+
 
         if save_interval and (update % save_interval == 0 or update == 1) and logger.get_dir():
             savepath = osp.join(logger.get_dir(), 'checkpoint%.5i'%update)

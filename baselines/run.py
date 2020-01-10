@@ -4,6 +4,8 @@ import multiprocessing
 import os.path as osp
 import gym
 import gym_furniture
+import multiagent
+import spriteworld
 from collections import defaultdict
 import tensorflow as tf
 import numpy as np
@@ -57,9 +59,8 @@ def train(args, extra_args):
 
 
     env_type, env_id = get_env_type(args)
-    #print("\n \n \n \n \n HI12 \n \n \n \n \n")
+    
 
-    #print('env_type: {}'.format(env_type))
 
     total_timesteps = int(args.num_timesteps)
     seed = args.seed
@@ -70,8 +71,8 @@ def train(args, extra_args):
     alg_kwargs.update(extra_args)
 
     env = build_env(args)
+
     if args.save_video_interval != 0:
-        #print("\n \n \n \n \n HI13 \n \n \n \n \n")
         env = VecVideoRecorder(env, osp.join(logger.get_dir(), "videos"), record_video_trigger=lambda x: x % args.save_video_interval == 0, video_length=args.save_video_length)
 
     if args.network:
@@ -80,14 +81,13 @@ def train(args, extra_args):
         if alg_kwargs.get('network') is None:
             alg_kwargs['network'] = get_default_network(env_type)
 
-    #print('Training {} on {}:{} with arguments \n{}'.format(args.alg, env_type, env_id, alg_kwargs))
-    #print("\n \n \n \n \n HI14 \n \n \n \n \n")
     model = learn(
         env=env,
         seed=seed,
         total_timesteps=total_timesteps,
         save_interval=100000,
         save_path=args.save_path,
+        env_id=env_id,
         **alg_kwargs
     )
     #print("\n \n \n \n \n HI15 \n \n \n \n \n")

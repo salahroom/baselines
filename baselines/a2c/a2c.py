@@ -2,7 +2,8 @@ import time
 import os.path as osp
 import functools
 import tensorflow as tf
-
+import gym
+import gym_furniture
 from baselines import logger
 
 from baselines.common import set_global_seeds, explained_variance
@@ -187,17 +188,6 @@ def learn(
 
     '''
 
-
-
-    set_global_seeds(seed)
-    step_size = env.envs[0].step_size
-    rotation_size = env.envs[0].rotation_size
-    active_rewards = env.envs[0].active_rewards
-    comment = "stepsize:{}, rotationsize: {}, {}".format(step_size, rotation_size, ", ".join(active_rewards))
-
-    current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    writer = SummaryWriter('runs/a2c/{} {}'.format(current_time, comment))
-
     # Get the nb of env
     nenvs = env.num_envs
     policy = build_policy(env, network, **network_kwargs)
@@ -233,10 +223,6 @@ def learn(
 
         
         policy_loss, value_loss, policy_entropy = model.train(obs, states, rewards, masks, actions, values)
-
-        writer.add_scalar('eprewmean', safemean([epinfo['r'] for epinfo in epinfobuf]), update)
-        writer.add_scalar('policy_entropy', float(policy_entropy), update)
-        writer.add_scalar('value_loss', float(value_loss), update)
         # Calculate the fps (frame per second)
         fps = int((update*nbatch)/nseconds)
         if update % log_interval == 0 or update == 1:
