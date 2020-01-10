@@ -4,7 +4,6 @@ import multiprocessing
 import os.path as osp
 import gym
 import gym_furniture
-import spriteworld
 from collections import defaultdict
 import tensorflow as tf
 import numpy as np
