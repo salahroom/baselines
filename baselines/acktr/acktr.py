@@ -5,7 +5,7 @@ import tensorflow as tf
 from baselines import logger
 import gym
 import gym_furniture
-import wandb
+# import wandb
 from baselines.common import set_global_seeds, explained_variance
 from baselines.common.policies import build_policy
 from baselines.common.tf_util import get_session, save_variables, load_variables
@@ -103,11 +103,11 @@ def learn(network, env, seed, env_id=None, total_timesteps=int(40e6), gamma=0.99
     
     info_env = gym.make(env_id)
     algo = 'acktr'
-    wandb.init(project="floorplan_generator", name=algo)
-    wandb.config.algo = algo
-    wandb.config.action_space = info_env.action_type
-    wandb.config.discretization = info_env.discretization
-    wandb.config.active_rewards = info_env.active_rewards
+    # wandb.init(project="floorplan_generator", name=algo)
+    # wandb.config.algo = algo
+    # # wandb.config.action_space = info_env.action_type
+    # wandb.config.step_size = info_env.step_size
+    #wandb.config.active_rewards = info_env.active_rewards
     #print("\n \n \n \n \n HI21 \n \n \n \n \n")
     if network == 'cnn':
         network_kwargs['one_dim_bias'] = True
@@ -175,8 +175,8 @@ def learn(network, env, seed, env_id=None, total_timesteps=int(40e6), gamma=0.99
             logger.record_tabular("eplenmean", safemean([epinfo['l'] for epinfo in epinfobuf]))
             logger.dump_tabular()
 
-            wandb.log({'eprewmean': safemean([epinfo['r'] for epinfo in epinfobuf]), 
-                    'eplenmean': safemean([epinfo['l'] for epinfo in epinfobuf])})
+            # wandb.log({'eprewmean': safemean([epinfo['r'] for epinfo in epinfobuf]), 
+            #         'eplenmean': safemean([epinfo['l'] for epinfo in epinfobuf])})
 
 
         if save_interval and (update % save_interval == 0 or update == 1) and logger.get_dir():

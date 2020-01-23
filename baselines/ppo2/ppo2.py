@@ -1,7 +1,7 @@
 import os
 import time
 import numpy as np
-import wandb
+#import wandb
 import os.path as osp
 from baselines import logger
 import gym
@@ -87,11 +87,11 @@ def learn(*, network, env, total_timesteps, env_id=None, eval_env = None, seed=N
     # comment = "stepsize:{}, rotationsize: {}, {}".format(step_size, rotation_size, ", ".join(active_rewards))
     info_env = gym.make(env_id)
     algo = 'ppo2'
-    wandb.init(project="floorplan_generator", name=algo)
-    wandb.config.algo = algo
-    wandb.config.action_space = info_env.action_type
-    wandb.config.discretization = info_env.discretization
-    wandb.config.active_rewards = info_env.active_rewards
+    # wandb.init(project="floorplan_generator", name=algo)
+    # wandb.config.algo = algo
+    # #wandb.config.action_space = info_env.action_type
+    # wandb.config.step_size = info_env.step_size
+    #wandb.config.active_rewards = info_env.active_rewards
 
     if isinstance(lr, float): lr = constfn(lr)
     else: assert callable(lr)
@@ -229,8 +229,8 @@ def learn(*, network, env, total_timesteps, env_id=None, eval_env = None, seed=N
 
             logger.dumpkvs()
 
-            wandb.log({'eprewmean': safemean([epinfo['r'] for epinfo in epinfobuf]), 
-                'eplenmean': safemean([epinfo['l'] for epinfo in epinfobuf])})
+            # wandb.log({'eprewmean': safemean([epinfo['r'] for epinfo in epinfobuf]), 
+            #     'eplenmean': safemean([epinfo['l'] for epinfo in epinfobuf])})
 
         if save_interval and (update % save_interval == 0 or update == 1) and logger.get_dir() and is_mpi_root:
             checkdir = osp.join(logger.get_dir(), 'checkpoints')
